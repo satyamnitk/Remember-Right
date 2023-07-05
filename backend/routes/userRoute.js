@@ -11,5 +11,10 @@ router.route("/user-tasks").get(verifyUser, userController.userTasks);
 router.route("/delete-task").post(userController.deleteUserTask);
 router.route("/complete-task").post(userController.completeUserTask);
 router.route("/logout").get(userController.userLogout);
+router.route("/show-task").post(userController.showUserTask);
+router.route("/update-task").post(userController.updateUserTask);
+router.route("/update-name").post(userController.updateUserName);
+router.route("/update-email").post(userController.updateUserEmail);
+router.route("/update-password").post(userController.updateUserPassword);
 
 module.exports = router;

@@ -86,7 +86,14 @@ const addTask = asyncHandler(async (req, res) => {
     if (!userTask) {
       const newTask = await Task({
         email,
-        tasks: [{ task, categoryType }],
+        tasks: [
+          {
+            task,
+            categoryType: categoryType.substring(1),
+            isCompleted: categoryType.charAt(0) === "0",
+            isTask: categoryType.charAt(0) === "1",
+          },
+        ],
       });
       const result = await newTask.save();
       if (result) {
@@ -96,7 +103,12 @@ const addTask = asyncHandler(async (req, res) => {
       }
     } else {
       try {
-        userTask.tasks.unshift({ task, categoryType });
+        userTask.tasks.unshift({
+          task,
+          categoryType: categoryType.substring(1),
+          isCompleted: categoryType.charAt(0) === "0",
+          isTask: categoryType.charAt(0) === "1",
+        });
         await userTask.save();
         return res.status(201).json({ message: "Task added successfully." });
       } catch (error) {
@@ -180,6 +192,127 @@ const userLogout = asyncHandler(async (req, res) => {
   res.send("Logout successfully.");
 });
 
+const showUserTask = asyncHandler(async (req, res) => {
+  const { email, id } = req.body;
+  try {
+    const userTasks = await Task.findOne({ email });
+    if (userTasks) {
+      try {
+        const index = userTasks.tasks.findIndex(
+          (obj) => obj._id.toString() === id
+        );
+        if (index === -1) {
+          return res.status(400).json({ error: "Unable to Show / Hide task." });
+        }
+        userTasks.tasks[index].isShow = !userTasks.tasks[index].isShow;
+        await userTasks.save();
+        return res
+          .status(201)
+          .json({ message: "Task Show / Hide successfully." });
+      } catch (error) {
+        return res.status(500).json({ error: `${error}` });
+      }
+    } else {
+      return res.status(400).json({ error: "Unable to Show / Hide task." });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: `${error}` });
+  }
+});
+
+const updateUserTask = asyncHandler(async (req, res) => {
+  const { email, task, id } = req.body;
+  try {
+    const userTasks = await Task.findOne({ email });
+    if (userTasks) {
+      try {
+        const index = userTasks.tasks.findIndex(
+          (obj) => obj._id.toString() === id
+        );
+        if (index === -1) {
+          return res.status(400).json({ error: "Unable to update task." });
+        }
+        userTasks.tasks[index].task = task;
+        await userTasks.save();
+        return res.status(201).json({ message: "Task updated successfully." });
+      } catch (error) {
+        return res.status(500).json({ error: `${error}` });
+      }
+    } else {
+      return res.status(400).json({ error: "Unable to update task." });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: `${error}` });
+  }
+});
+
+const updateUserName = asyncHandler(async (req, res) => {
+  const { email, newName } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      try {
+        user.name = newName;
+        await user.save();
+        return res.status(201).json({ message: "Name updated successfully." });
+      } catch (error) {
+        return res.status(500).json({ error: `${error}` });
+      }
+    } else {
+      return res.status(400).json({ error: "Unable to update name." });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: `${error}` });
+  }
+});
+
+const updateUserEmail = asyncHandler(async (req, res) => {
+  const { email, newEmail } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      try {
+        user.email = newEmail;
+        await user.save();
+        const userTask = await Task.findOne({ email });
+        if (userTask) {
+          userTask.email = newEmail;
+          await userTask.save();
+        }
+        return res.status(201).json({ message: "Email updated successfully." });
+      } catch (error) {
+        return res.status(500).json({ error: `${error}` });
+      }
+    } else {
+      return res.status(400).json({ error: "Unable to update email." });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: `${error}` });
+  }
+});
+
+const updateUserPassword = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      try {
+        user.password = password;
+        await user.save();
+        return res
+          .status(201)
+          .json({ message: "Password updated successfully." });
+      } catch (error) {
+        return res.status(500).json({ error: `${error}` });
+      }
+    } else {
+      return res.status(400).json({ error: "Unable to update password." });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: `${error}` });
+  }
+});
+
 module.exports = {
   userRegister,
   userLogin,
@@ -189,4 +322,9 @@ module.exports = {
   deleteUserTask,
   completeUserTask,
   userLogout,
+  showUserTask,
+  updateUserTask,
+  updateUserName,
+  updateUserEmail,
+  updateUserPassword,
 };
